@@ -1,4 +1,5 @@
-import globalVars from "./globals"
+import { gameContainer } from "./globals"
+import state from "./state"
 import speechSynth from "./speech-synth"
 import Player from "./player"
 
@@ -20,14 +21,14 @@ const pieceMovement = function (count) {
 }
 
 function saveState(template, value) {
-    if (template.inputId === "numberOfPlayers" && !globalVars.state.players.length) {
+    if (template.inputId === "numberOfPlayers" && !state.players.length) {
         let i = 0
         for (i; i < value; i++) {
             let ownSound = gameMusic(`/media/player_${i + 1}.mp3`)
-            globalVars.state.players.push(new Player(ownSound))
+            state.players.push(new Player(ownSound))
         }
     } else {
-        globalVars.state.players[template.player].name = value ? value : `Player ${template.player + 1}`
+        state.players[state.index].name = value ? value : `Player ${state.index + 1}`
     }
 }
 
@@ -42,7 +43,7 @@ export async function embedTemplate(instructions, template, next) {
             <p id="${template.inputId}-instructions">${instructions}</p>
             <button type="submit" hidden>Next</button>
         </form>`
-        globalVars.gameContainer.innerHTML = generatedTemplate
+        gameContainer.innerHTML = generatedTemplate
         userInput = document.getElementById(template.inputId)
         document.getElementById(template.formId)
             .addEventListener("submit", (e) => {
@@ -59,14 +60,14 @@ export async function embedTemplate(instructions, template, next) {
         instructions += " To hear these instructions again, press CTRL + j."
         const generatedTemplate = `<p>${instructions}</p>
         <button id="${template.inputId}">${template.inputLabel}</button>`
-        globalVars.gameContainer.innerHTML = generatedTemplate
+        gameContainer.innerHTML = generatedTemplate
         userInput = document.getElementById(template.inputId)
         userInput.addEventListener("click", next)
         speechSynth.speak(instructions)
     }
     if (template.mode === "gameStarted" && template.loading) {
         const generatedTemplate = `<p>${instructions}</p>`
-        globalVars.gameContainer.innerHTML = generatedTemplate
+        gameContainer.innerHTML = generatedTemplate
         await speechSynth.speak(instructions)
         next()
     }

@@ -1,8 +1,8 @@
-import globalVars from "./globals"
+import { gameContainer } from "./globals"
+import state from "./state"
 import { embedTemplate, pieceMovement } from "./functions"
 import dice from "./dice"
 import { showCurrentStatus, checkCurrentPosition } from "./board"
-let currentSound = globalVars.state.currentSound
 
 class Player {
     constructor(ownSound, name, currentPosition, currentValue) {
@@ -10,12 +10,12 @@ class Player {
         this.name = name || ""
         this.currentPosition = currentPosition || 1
         this.currentValue = currentValue || 0
+        this.status = {}
     }
 
-    renderPlayGround(index) {
+    renderPlayGround() {
         this.ownSound.play()
         this.ownSound.loop = true
-        index = index || 0
         const instructions = `Hi ${this.name}, It's your turn. 
         You are currently at the position ${this.currentPosition}. 
         To role the dice, press the space bar or enter key.`
@@ -24,20 +24,19 @@ class Player {
             inputId: "role-dice",
             inputLabel: "Role Dice"
         }
-        embedTemplate(instructions, template, () => dice.roleDice(this, index))
+        embedTemplate(instructions, template, () => dice.roleDice())
     }
 
-    movePiece(index) {
-        index = index || 0
+    movePiece() {
         const instructions = `${this.name}, moving your piece...`
         const template = {
             mode: "gameStarted",
             loading: true
         }
         if (this.currentPosition + this.currentValue > 100) {
-            embedTemplate(instructions, template, () => showCurrentStatus(this, index, { overHundred: true }))
+            embedTemplate(instructions, template, () => showCurrentStatus({ overHundred: true }))
         } else if (this.currentPosition + this.currentValue === 100) {
-            embedTemplate(instructions, template, () => this.finalStatus(index, { gameOver: true }))
+            embedTemplate(instructions, template, () => this.finalStatus({ gameOver: true }))
             return
         } else {
             this.currentPosition += this.currentValue
@@ -47,23 +46,22 @@ class Player {
         const result = checkCurrentPosition(this.currentPosition)
         if (result.ladder) {
             embedTemplate(instructions, template, () => {
-                showCurrentStatus(this, index, result)
+                showCurrentStatus(result)
                 this.currentPosition = result.ladder
             })
         }
         if (result.snake) {
             embedTemplate(instructions, template, () => {
-                showCurrentStatus(this, index, result)
+                showCurrentStatus(result)
                 this.currentPosition = result.snake
             })
         }
         if (!result) {
-            embedTemplate(instructions, template, () => this.finalStatus(index))
+            embedTemplate(instructions, template, () => this.finalStatus())
         }
     }
 
-    finalStatus(index, status) {
-        index = index || 0
+    finalStatus(status) {
         status = status || false
         let instructions = ""
         const template = {
@@ -85,20 +83,23 @@ class Player {
             return
         } else {
             instructions = `${this.name}, You've reached at the position ${this.currentPosition}. 
-        To continue, press the space bar or enter key.`
+            To continue, press the space bar or enter key.`
         }
-        if (index === globalVars.state.players.length - 1) {
+        if (state.index === state.players.length - 1) {
             embedTemplate(instructions, template, () => {
+                state.index = 0
                 this.ownSound.pause()
                 this.ownSound.currentTime = 0
-                globalVars.state.players[0].renderPlayGround()
+                state.currentPlayer = state.players[0]
+                state.currentPlayer.renderPlayGround()
             })
             return
         }
         embedTemplate(instructions, template, () => {
             this.ownSound.pause()
             this.ownSound.currentTime = 0
-            globalVars.state.players[index + 1].renderPlayGround(index + 1)
+            state.currentPlayer = state.players[++state.index]
+            state.currentPlayer.renderPlayGround()
         })
     }
 

@@ -1,7 +1,7 @@
-import globalVars from "./globals"
+import { gameContainer } from "./globals"
+import state from "./state"
 import { embedTemplate, introMusic, gameMusic } from "./functions"
 import speechSynth from "./speech-synth"
-let currentSound = globalVars.state.currentSound
 
 class Init {
     constructor() {
@@ -13,7 +13,7 @@ class Init {
             <h1>Snakes and Ladders</h1>
             <button id="start">Start Game</button>
         </form>`
-        globalVars.gameContainer.innerHTML = template
+        gameContainer.innerHTML = template
         document.getElementById("start").focus()
         document.getElementById("start-game")
             .addEventListener("submit", (e) => {
@@ -27,7 +27,7 @@ class Init {
         const welcomeText = document.createElement("p")
         welcomeText.textContent = "Welcome"
         welcomeText.classList.add("welcome")
-        globalVars.gameContainer.replaceChild(welcomeText, document.getElementById("start-game"))
+        gameContainer.replaceChild(welcomeText, document.getElementById("start-game"))
         intro.play()
         welcomeText.style.animation = `welcome ${intro.duration}s`
         setTimeout(async () => await speechSynth.speak(welcomeText.textContent), (intro.duration * 1000) / 4)
@@ -38,9 +38,9 @@ class Init {
         const instructions = `Enter number of players. 
         Maximum up-to 4 players are allowed. 
         You can also use up or down arrow keys to adjust the value.`
-        currentSound = gameMusic("/media/select_players.mp3")
-        currentSound.play()
-        currentSound.loop = true
+        state.currentSound = gameMusic("/media/select_players.mp3")
+        state.currentSound.play()
+        state.currentSound.loop = true
         embedTemplate(instructions, {
             mode: "init",
             formId: "number-of-players",
@@ -52,25 +52,28 @@ class Init {
         })
     }
 
-    fetchPlayersName(index) {
-        index = index || 0
-        const instructions = `Enter name of the player number ${index + 1}.`
+    fetchPlayersName() {
+        const instructions = `Enter name of the player number ${state.index + 1}.`
         const template = {
             mode: "init",
-            player: index,
             formId: "player-name",
             inputId: "playerNameInput",
-            inputLabel: `Name of the Player Number ${index + 1}`,
+            inputLabel: `Name of the Player Number ${state.index + 1}`,
             inputType: "text"
         }
-        if (index === globalVars.state.players.length - 1) {
+        if (state.index === state.players.length - 1) {
             embedTemplate(instructions, template, () => {
-                currentSound.pause()
-                globalVars.state.players[0].renderPlayGround()
+                state.index = 0
+                state.currentSound.pause()
+                state.currentPlayer = state.players[0]
+                state.currentPlayer.renderPlayGround()
             })
             return
         }
-        embedTemplate(instructions, template, () => this.fetchPlayersName(index + 1))
+        embedTemplate(instructions, template, () => {
+            state.index++
+            this.fetchPlayersName()
+        })
     }
 }
 

@@ -1,3 +1,5 @@
+import { gameContainer } from "./globals"
+import state from "./state"
 import { embedTemplate } from "./functions"
 
 const ladders = {
@@ -22,8 +24,7 @@ const snakes = {
     99: 78
 }
 
-export function showCurrentStatus(player, index, status) {
-    index = index || 0
+export function showCurrentStatus(status) {
     let instructions = ""
     const template = {
         mode: "gameStarted",
@@ -31,20 +32,20 @@ export function showCurrentStatus(player, index, status) {
     }
     if (status) {
         if (status.ladder) {
-            instructions = `${player.name}, You reached at the position ${player.currentPosition}. Great! You are going to climb a ladder!`
+            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
         }
         if (status.snake) {
-            instructions = `${player.name}, You reached at the position ${player.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
         }
         if (status.overHundred) {
-            instructions = `${player.name}, You've to land on exact position of 100. Please try again in a next turn.`
-            embedTemplate(instructions, template, () => player.finalStatus(index, status))
+            instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
+            embedTemplate(instructions, template, () => state.currentPlayer.finalStatus(status))
             return
         }
     } else {
-        instructions = `${player.name}, You got ${player.currentValue}.`
+        instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
     }
-    embedTemplate(instructions, template, () => player.movePiece(index))
+    embedTemplate(instructions, template, () => state.currentPlayer.movePiece())
 }
 
 export function checkCurrentPosition(position) {
