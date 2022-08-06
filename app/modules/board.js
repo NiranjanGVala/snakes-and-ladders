@@ -1,6 +1,7 @@
 import { gameContainer } from "./globals"
 import state from "./state"
-import { embedTemplate } from "./functions"
+import { embedTemplate, loadAudioFile, playAudio } from "./functions"
+import speechSynth from "./speech-synth"
 
 const ladders = {
     4: 14,
@@ -24,31 +25,77 @@ const snakes = {
     99: 78
 }
 
-export function showCurrentStatus(status) {
-    let instructions = ""
-    const template = {
+const showCurrentStatus = async function (status) {
+    const config = {
         mode: "gameStarted",
         loading: true
     }
     if (status) {
         if (status.ladder) {
-            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
+            const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
+            if (!state.ladderSounds.ladderSound) {
+                const audio = loadAudioFile("/media/ladder.mp3")
+                audio.volume = 0.15
+                state.ladderSounds.ladderSound = audio
+            }
+            await embedTemplate(instructions, config)
+            await Promise.all([
+                speechSynth.speak(instructions),
+                playAudio(state.ladderSounds.ladderSound, 1)
+            ])
+            state.currentPlayer.afterLadder = true
         }
         if (status.snake) {
-            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+            const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+            if (!state.snakeSounds.snakeSound) {
+                const audio = loadAudioFile("/media/snake.mp3")
+                audio.volume = 1
+                state.snakeSounds.snakeSound = audio
+            }
+            await embedTemplate(instructions, config)
+            await Promise.all([
+                speechSynth.speak(instructions),
+                playAudio(state.snakeSounds.snakeSound, 3)
+            ])
+            state.currentPlayer.afterSnake = true
         }
         if (status.overHundred) {
-            instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
-            embedTemplate(instructions, template, () => state.currentPlayer.finalStatus(status))
+            const instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
+            await embedTemplate(instructions, config)
+            await speechSynth.speak(instructions)
+            state.currentPlayer.finalStatus(status)
+            return
+        }
+        if (status.gameOver) {
+            const instructions = `${state.currentPlayer.name}, You landed on destination of your dreem! 
+            Very very congratulations to you! You won the Game! 
+            It's party time.`
+            if (!state.winSounds.winSound && !state.winSounds.cheersSound) {
+                const winSound = loadAudioFile("/media/win.mp3")
+                const cheersSound = loadAudioFile("/media/cheers.mp3")
+                winSound.volume = 0.25
+                cheersSound.volume = 0.25
+                state.winSounds.winSound = winSound
+                state.winSounds.cheersSound = cheersSound
+            }
+            await embedTemplate(instructions, config)
+            await Promise.all([
+                speechSynth.speak(instructions),
+                playAudio(state.winSounds.winSound, 1),
+                playAudio(state.winSounds.cheersSound, 1)
+            ])
+            state.currentPlayer.finalStatus(status)
             return
         }
     } else {
-        instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
+        const instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
+        await embedTemplate(instructions, config)
+        await speechSynth.speak(instructions)
     }
-    embedTemplate(instructions, template, () => state.currentPlayer.movePiece())
+    state.currentPlayer.movePiece()
 }
 
-export function checkCurrentPosition(position) {
+const checkCurrentPosition = function (position) {
     if (ladders[position]) {
         return { ladder: ladders[position] }
     }
@@ -57,3 +104,5 @@ export function checkCurrentPosition(position) {
     }
     return false
 }
+
+export { showCurrentStatus, checkCurrentPosition }

@@ -22,10 +22,13 @@ const config = {
         ]
     },
     devServer: {
+        host: "0.0.0.0",
         port: 8080,
+        allowedHosts: "all",
         static: path.resolve(__dirname, "dist"),
         hot: true
     },
+    devtool: false,
     mode: "development"
 }
 

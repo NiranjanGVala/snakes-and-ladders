@@ -1,6 +1,6 @@
 import { gameContainer } from "./globals"
 import state from "./state"
-import { embedTemplate, introMusic, gameMusic } from "./functions"
+import { embedTemplate, introMusic, loadAudioFile } from "./functions"
 import speechSynth from "./speech-synth"
 
 class Init {
@@ -31,49 +31,55 @@ class Init {
         intro.play()
         welcomeText.style.animation = `welcome ${intro.duration}s`
         setTimeout(async () => await speechSynth.speak(welcomeText.textContent), (intro.duration * 1000) / 4)
-        intro.addEventListener("ended", () => this.fetchNumberOfPlayers())
+        intro.onended = () => this.fetchNumberOfPlayers()
     }
 
-    fetchNumberOfPlayers() {
+    async fetchNumberOfPlayers() {
         const instructions = `Enter number of players. 
         Maximum up-to 4 players are allowed. 
-        You can also use up or down arrow keys to adjust the value.`
-        state.currentSound = gameMusic("/media/select_players.mp3")
-        state.currentSound.play()
-        state.currentSound.loop = true
-        embedTemplate(instructions, {
+        You can also use up or down arrow keys to adjust the value. 
+        To hear these instructions again, Press CTRL + J.`
+        const config = {
             mode: "init",
             formId: "number-of-players",
             inputId: "numberOfPlayers",
             inputType: "number",
             inputLabel: "Number of Players"
-        }, () => {
-            this.fetchPlayersName()
-        })
+        }
+        if (!state.currentSound) {
+            state.currentSound = loadAudioFile("/media/select_players.mp3")
+            state.currentSound.play()
+            state.currentSound.loop = true
+        } else {
+            state.currentSound.play()
+        }
+        speechSynth.speak(instructions)
+        await embedTemplate(instructions, config)
+        this.fetchPlayersName()
     }
 
-    fetchPlayersName() {
-        const instructions = `Enter name of the player number ${state.index + 1}.`
-        const template = {
+    async fetchPlayersName() {
+        const instructions = `Enter name of the player number ${state.index + 1}. 
+        To hear these instructions again, press CTRL +J.`
+        const config = {
             mode: "init",
             formId: "player-name",
             inputId: "playerNameInput",
             inputLabel: `Name of the Player Number ${state.index + 1}`,
             inputType: "text"
         }
+        speechSynth.speak(instructions)
         if (state.index === state.players.length - 1) {
-            embedTemplate(instructions, template, () => {
-                state.index = 0
-                state.currentSound.pause()
-                state.currentPlayer = state.players[0]
-                state.currentPlayer.renderPlayGround()
-            })
+            await embedTemplate(instructions, config)
+            state.index = 0
+            state.currentSound.pause()
+            state.currentPlayer = state.players[0]
+            state.currentPlayer.renderPlayGround()
             return
         }
-        embedTemplate(instructions, template, () => {
-            state.index++
-            this.fetchPlayersName()
-        })
+        await embedTemplate(instructions, config)
+        state.index++
+        this.fetchPlayersName()
     }
 }
 
