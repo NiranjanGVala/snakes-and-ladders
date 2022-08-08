@@ -20,7 +20,5 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.9.3"
   },
-  "dependencies": {
-    "easy-speech": "^1.2.0"
-  }
+  "dependencies": {}
 }

@@ -32,6 +32,7 @@ class Dice {
                 playAudio(state.rollingDiceSound, 1),
                 speechSynth.speak(instructions)
             ])
+            console.log("Fired.")
             showCurrentStatus()
         }
     }
