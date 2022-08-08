@@ -2,19 +2,35 @@ import EasySpeech from "easy-speech"
 
 class SpeechSynth {
     constructor() {
-        // Will be soon
+        this.voices = []
+    }
+
+    // Private properties
+    #initialized = false
+    #defaultUtter = {}
+
+    // Private methods
+    #init() {
+        return new Promise(async (resolve, reject) => {
+            await EasySpeech.init({ maxTimeout: 5000, interval: 250 })
+            let voices = await EasySpeech.voices()
+            this.voices = voices.filter((voice) => {
+                if (voice.default) {
+                    this.#defaultUtter.lang = voice.lang
+                    this.#defaultUtter.voice = voice
+                }
+                return /en/.test(voice.lang)
+            })
+            resolve(true)
+        })
     }
 
     speak(txt) {
         return new Promise(async (resolve, reject) => {
+            this.#initialized = this.#initialized ? this.#initialized : await this.#init()
+            let utter = Object.create(this.#defaultUtter)
+            utter.text = txt
             try {
-                await EasySpeech.init()
-                const voices = await EasySpeech.voices()
-                let utter = {
-                    lang: voices[0].lang,
-                    text: txt,
-                    voice: voices[0]
-                }
                 await EasySpeech.speak(utter)
                 resolve()
             } catch (e) {

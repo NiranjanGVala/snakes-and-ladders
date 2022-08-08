@@ -1,9 +1,8 @@
-import { gameContainer } from "./globals"
-import state from "./state"
-import { embedTemplate, loadAudioFile, playAudio, movingPieceSound } from "./functions"
+import { checkCurrentPosition, showCurrentStatus } from "./board"
 import dice from "./dice"
-import { showCurrentStatus, checkCurrentPosition } from "./board"
+import { embedTemplate, loadAudioFile, movingPieceSound, playAudio } from "./functions"
 import speechSynth from "./speech-synth"
+import state from "./state"
 
 class Player {
     constructor(ownSound) {
@@ -11,9 +10,72 @@ class Player {
         this.name = ""
         this.currentPosition = 1
         this.currentValue = 0
-        this.status = {}
+        this.ladder = false
+        this.snake = false
     }
 
+    // Private methods
+    #handleLadder(instructions, config) {
+        return new Promise(async (resolve, reject) => {
+            if (this.ladder.position) {
+                await embedTemplate(instructions, config)
+                await Promise.all([
+                    movingPieceSound(),
+                    speechSynth.speak(instructions)
+                ])
+                this.currentValue = 0
+                showCurrentStatus()
+                this.currentPosition = this.ladder.position
+                resolve()
+            } else {
+                if (!state.ladderSounds.movingPieceSound) {
+                    const audio = loadAudioFile("/media/piece_move_up.mp3")
+                    audio.volume = 1
+                    state.ladderSounds.movingPieceSound = audio
+                }
+                await embedTemplate(instructions, config)
+                await Promise.all([
+                    speechSynth.speak(instructions),
+                    playAudio(state.ladderSounds.movingPieceSound, 1)
+                ])
+                this.finalStatus()
+                this.ladder = false
+                resolve()
+            }
+        })
+    }
+
+    #handleSnake(instructions, config) {
+        return new Promise(async (resolve, reject) => {
+            if (this.snake.position) {
+                await embedTemplate(instructions, config)
+                await Promise.all([
+                    speechSynth.speak(instructions),
+                    movingPieceSound()
+                ])
+                this.currentValue = 0
+                showCurrentStatus()
+                this.currentPosition = this.snake.position
+                resolve()
+            } else {
+                if (!state.snakeSounds.movingPieceSound) {
+                    const audio = loadAudioFile("/media/piece_move_down.mp3")
+                    audio.volume = 1
+                    state.snakeSounds.movingPieceSound = audio
+                }
+                await embedTemplate(instructions, config)
+                await Promise.all([
+                    speechSynth.speak(instructions),
+                    playAudio(state.snakeSounds.movingPieceSound, 1)
+                ])
+                this.finalStatus()
+                this.snake = false
+                resolve()
+            }
+        })
+    }
+
+    // Public methods
     async renderPlayGround() {
         this.ownSound.play()
         this.ownSound.loop = true
@@ -70,67 +132,21 @@ class Player {
         } else {
             if (this.currentValue) this.currentPosition += this.currentValue
         }
-        const result = checkCurrentPosition(this.currentPosition)
-        if (result.ladder) {
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                movingPieceSound(),
-                speechSynth.speak(instructions)
-            ])
-            this.currentValue = 0
-            showCurrentStatus(result)
-            this.currentPosition = result.ladder
+        await checkCurrentPosition()
+        if (this.ladder) {
+            await this.#handleLadder(instructions, config)
+            return
         }
-        if (result.snake) {
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                speechSynth.speak(instructions),
-                movingPieceSound()
-            ])
-            this.currentValue = 0
-            showCurrentStatus(result)
-            this.currentPosition = result.snake
+        if (this.snake) {
+            await this.#handleSnake(instructions, config)
+            return
         }
-        if (!result) {
-            if (this.currentValue) {
-                await embedTemplate(instructions, config)
-                await Promise.all([
-                    speechSynth.speak(instructions),
-                    movingPieceSound()
-                ])
-                this.finalStatus()
-            } else {
-                if (this.afterLadder) {
-                    if (!state.ladderSounds.movingPieceSound) {
-                        const audio = loadAudioFile("/media/piece_move_up.mp3")
-                        audio.volume = 1
-                        state.ladderSounds.movingPieceSound = audio
-                    }
-                    await embedTemplate(instructions, config)
-                    await Promise.all([
-                        speechSynth.speak(instructions),
-                        playAudio(state.ladderSounds.movingPieceSound, 1)
-                    ])
-                    this.afterLadder = false
-                } else if (this.afterSnake) {
-                    if (!state.snakeSounds.movingPieceSound) {
-                        const audio = loadAudioFile("/media/piece_move_down.mp3")
-                        audio.volume = 1
-                        state.snakeSounds.movingPieceSound = audio
-                    }
-                    await embedTemplate(instructions, config)
-                    await Promise.all([
-                        speechSynth.speak(instructions),
-                        playAudio(state.snakeSounds.movingPieceSound, 1)
-                    ])
-                    this.afterSnake = false
-                } else {
-                    await embedTemplate(instructions, config)
-                    await speechSynth.speak(instructions)
-                }
-                this.finalStatus()
-            }
-        }
+        await embedTemplate(instructions, config)
+        await Promise.all([
+            speechSynth.speak(instructions),
+            movingPieceSound()
+        ])
+        this.finalStatus()
     }
 
     async finalStatus(status) {

@@ -15,8 +15,8 @@ class Dice {
             mode: "gameStarted",
             loading: true
         }
-        state.currentPlayer.currentValue = Math.floor(Math.random() * 6) + 1
-        // state.currentPlayer.currentValue = 2
+        // state.currentPlayer.currentValue = Math.floor(Math.random() * 6) + 1
+        state.currentPlayer.currentValue = 3
         await embedTemplate(instructions, config)
         if (!state.rollingDiceSound) {
             const audio = loadAudioFile("/media/dice_rolling.mp3")

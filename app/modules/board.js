@@ -30,35 +30,39 @@ const showCurrentStatus = async function (status) {
         mode: "gameStarted",
         loading: true
     }
+    if (state.currentPlayer.ladder.position) {
+        const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
+        if (!state.ladderSounds.ladderSound) {
+            const audio = loadAudioFile("/media/ladder.mp3")
+            audio.volume = 0.15
+            state.ladderSounds.ladderSound = audio
+        }
+        await embedTemplate(instructions, config)
+        await Promise.all([
+            speechSynth.speak(instructions),
+            playAudio(state.ladderSounds.ladderSound, 1)
+        ])
+        state.currentPlayer.ladder.position = 0
+        state.currentPlayer.movePiece()
+        return
+    }
+    if (state.currentPlayer.snake.position) {
+        const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+        if (!state.snakeSounds.snakeSound) {
+            const audio = loadAudioFile("/media/snake.mp3")
+            audio.volume = 1
+            state.snakeSounds.snakeSound = audio
+        }
+        await embedTemplate(instructions, config)
+        await Promise.all([
+            speechSynth.speak(instructions),
+            playAudio(state.snakeSounds.snakeSound, 3)
+        ])
+        state.currentPlayer.snake.position = 0
+        state.currentPlayer.movePiece()
+        return
+    }
     if (status) {
-        if (status.ladder) {
-            const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
-            if (!state.ladderSounds.ladderSound) {
-                const audio = loadAudioFile("/media/ladder.mp3")
-                audio.volume = 0.15
-                state.ladderSounds.ladderSound = audio
-            }
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                speechSynth.speak(instructions),
-                playAudio(state.ladderSounds.ladderSound, 1)
-            ])
-            state.currentPlayer.afterLadder = true
-        }
-        if (status.snake) {
-            const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
-            if (!state.snakeSounds.snakeSound) {
-                const audio = loadAudioFile("/media/snake.mp3")
-                audio.volume = 1
-                state.snakeSounds.snakeSound = audio
-            }
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                speechSynth.speak(instructions),
-                playAudio(state.snakeSounds.snakeSound, 3)
-            ])
-            state.currentPlayer.afterSnake = true
-        }
         if (status.overHundred) {
             const instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
             await embedTemplate(instructions, config)
@@ -91,18 +95,26 @@ const showCurrentStatus = async function (status) {
         const instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
         await embedTemplate(instructions, config)
         await speechSynth.speak(instructions)
+        state.currentPlayer.movePiece()
     }
-    state.currentPlayer.movePiece()
 }
 
-const checkCurrentPosition = function (position) {
-    if (ladders[position]) {
-        return { ladder: ladders[position] }
-    }
-    if (snakes[position]) {
-        return { snake: snakes[position] }
-    }
-    return false
+const checkCurrentPosition = function () {
+    return new Promise((resolve, reject) => {
+        if (ladders[state.currentPlayer.currentPosition]) {
+            state.currentPlayer.ladder = {
+                position: ladders[state.currentPlayer.currentPosition]
+            }
+            resolve()
+        }
+        if (snakes[state.currentPlayer.currentPosition]) {
+            state.currentPlayer.snake = {
+                position: snakes[state.currentPlayer.currentPosition]
+            }
+            resolve()
+        }
+        resolve()
+    })
 }
 
 export { showCurrentStatus, checkCurrentPosition }
