@@ -62,9 +62,10 @@ const movingPieceSound = async function () {
 }
 
 const embedTemplate = function (instructions, config) {
-    return new Promise((resolve, reject) => {
+    config = config || false
+    return new Promise(async (resolve, reject) => {
         let userInput = ""
-        if (config.mode !== "gameStarted") {
+        if (state.mode === "init") {
             const generatedTemplate = `<form id="${config.formId}">
             <label for="${config.inputId}">${config.inputLabel}</label>
             <input id="${config.inputId}" type="${config.inputType}" aria-describedby="${config.inputId}-instructions"
@@ -78,30 +79,43 @@ const embedTemplate = function (instructions, config) {
                 .addEventListener("submit", (e) => {
                     e.preventDefault()
                     savePlayersIntoState(config, userInput.value)
-                    resolve(instructions)
+                    resolve()
                 })
             userInput.addEventListener("input", (e) => {
                 speechSynth.speak(e.target.value)
             })
         }
-        if (config.mode === "gameStarted" && !config.loading) {
-            const generatedTemplate = `<p>${instructions}</p>
-            <button id="${config.inputId}">${config.inputLabel}</button>`
+        if (state.mode === "started" && !state.loading) {
+            const generatedTemplate = `<p id="instructions">${instructions}</p>
+            <button id="${config.inputId}" aria-describedby="instructions">${config.inputLabel}</button>`
             gameContainer.innerHTML = generatedTemplate
             userInput = document.getElementById(config.inputId)
-            userInput.onclick = () => resolve(instructions)
+            userInput.onclick = () => resolve()
         }
-        if (config.mode === "gameStarted" && config.loading) {
-            const generatedTemplate = `<p>${instructions}</p>`
+        if (state.mode === "started" && state.loading) {
+            const generatedTemplate = `<div id="instructions" tabindex="0">${instructions}</div>`
             gameContainer.innerHTML = generatedTemplate
-            resolve(instructions)
+            userInput = document.getElementById("instructions")
+            resolve()
         }
         if (userInput) {
             userInput.focus()
-            userInput.addEventListener("keydown", (e) => {
+            userInput.addEventListener("keydown", async (e) => {
                 if (e.ctrlKey && e.key === "j") {
                     e.preventDefault()
                     speechSynth.speak(instructions)
+                }
+                if (e.ctrlKey && e.key === "s") {
+                    let force = {}
+                    e.preventDefault()
+                    if (state.speech) {
+                        if (force.cancel) force.cancel()
+                        speechSynth.speak("Speech Off")
+                        state.speech = false
+                    } else {
+                        state.speech = true
+                        await speechSynth.speak(`Speech On. ${instructions}`, force)
+                    }
                 }
             })
         }

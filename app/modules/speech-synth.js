@@ -1,3 +1,5 @@
+import state from "./state"
+
 class SpeechSynth {
     constructor() {
         this.voices = []
@@ -24,18 +26,27 @@ class SpeechSynth {
         })
     }
 
-    speak(txt) {
+    speak(txt, force) {
         this.#speech.cancel()
         return new Promise(async (resolve, reject) => {
-            this.#initialized = this.#initialized ? this.#initialized : await this.#init()
-            if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = await this.#init
-            }
-            let utter = new SpeechSynthesisUtterance(txt)
-            utter.lang = this.#DefaultUtterConfig.lang
-            utter.voice = this.#DefaultUtterConfig.voice
-            this.#speech.speak(utter)
-            utter.onend = () => {
+            if (state.speech) {
+                this.#initialized = this.#initialized ? this.#initialized : await this.#init()
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = await this.#init
+                }
+                let utter = new SpeechSynthesisUtterance(txt)
+                utter.lang = this.#DefaultUtterConfig.lang
+                utter.voice = this.#DefaultUtterConfig.voice
+                this.#speech.speak(utter)
+                utter.onend = () => {
+                    resolve()
+                }
+                if (force) {
+                    force.cancel = () => {
+                        resolve()
+                    }
+                }
+            } else {
                 resolve()
             }
         })

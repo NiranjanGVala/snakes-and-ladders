@@ -10,15 +10,17 @@ class Player {
         this.name = ""
         this.currentPosition = 1
         this.currentValue = 0
+        this.overHundred = false
+        this.gameOver = false
         this.ladder = false
         this.snake = false
     }
 
     // Private methods
-    #handleLadder(instructions, config) {
+    #handleLadder(instructions) {
         return new Promise(async (resolve, reject) => {
             if (this.ladder.position) {
-                await embedTemplate(instructions, config)
+                await embedTemplate(instructions)
                 await Promise.all([
                     movingPieceSound(),
                     speechSynth.speak(instructions)
@@ -33,7 +35,7 @@ class Player {
                     audio.volume = 1
                     state.ladderSounds.movingPieceSound = audio
                 }
-                await embedTemplate(instructions, config)
+                await embedTemplate(instructions)
                 await Promise.all([
                     speechSynth.speak(instructions),
                     playAudio(state.ladderSounds.movingPieceSound, 1)
@@ -45,10 +47,10 @@ class Player {
         })
     }
 
-    #handleSnake(instructions, config) {
+    #handleSnake(instructions) {
         return new Promise(async (resolve, reject) => {
             if (this.snake.position) {
-                await embedTemplate(instructions, config)
+                await embedTemplate(instructions)
                 await Promise.all([
                     speechSynth.speak(instructions),
                     movingPieceSound()
@@ -63,7 +65,7 @@ class Player {
                     audio.volume = 1
                     state.snakeSounds.movingPieceSound = audio
                 }
-                await embedTemplate(instructions, config)
+                await embedTemplate(instructions)
                 await Promise.all([
                     speechSynth.speak(instructions),
                     playAudio(state.snakeSounds.movingPieceSound, 1)
@@ -75,8 +77,49 @@ class Player {
         })
     }
 
+    #handleOverHundred(instructions) {
+        return new Promise(async (resolve, reject) => {
+            if (this.overHundred) {
+                if (!state.overHundredSounds.stumbledSound && !state.overHundredSounds.moveDownSound) {
+                    const stumbledAudio = loadAudioFile("/media/over_hundred.mp3")
+                    const moveDownAudio = loadAudioFile("/media/move_down.ogg")
+                    stumbledAudio.volume = 1
+                    moveDownAudio.volume = 1
+                    state.overHundredSounds.stumbledSound = stumbledAudio
+                    state.overHundredSounds.moveDownSound = moveDownAudio
+                }
+                await embedTemplate(instructions)
+                await Promise.all([
+                    speechSynth.speak(instructions),
+                    await movingPieceSound(),
+                    await playAudio(state.overHundredSounds.stumbledSound, 1),
+                    playAudio(state.overHundredSounds.moveDownSound, 1)
+                ])
+                this.currentValue = 0
+                showCurrentStatus()
+                resolve()
+            }
+        })
+    }
+
+    #handleGameOver(instructions) {
+        return new Promise(async (resolve, reject) => {
+            if (this.gameOver) {
+                await embedTemplate(instructions)
+                await Promise.all([
+                    movingPieceSound(),
+                    speechSynth.speak(instructions)
+                ])
+                this.currentValue = 0
+                showCurrentStatus()
+                resolve()
+            }
+        })
+    }
+
     // Public methods
     async renderPlayGround() {
+        if (state.mode === "init") state.mode = "started"
         this.ownSound.play()
         this.ownSound.loop = true
         const instructions = `Hi ${this.name}, It's your turn. 
@@ -84,7 +127,6 @@ class Player {
         To role the dice, press the space bar or enter key. 
         To hear these instructions again, press CTRL + J.`
         const config = {
-            mode: "gameStarted",
             inputId: "role-dice",
             inputLabel: "Role Dice"
         }
@@ -94,54 +136,27 @@ class Player {
     }
 
     async movePiece() {
+        if (!state.loading) state.loading = true
         const instructions = `${this.name}, moving your piece...`
-        const config = {
-            mode: "gameStarted",
-            loading: true
-        }
-        if (this.currentPosition + this.currentValue > 100) {
-            this.currentValue = 100 - this.currentPosition
-            this.overHundred = true
-            if (!state.overHundredSounds.stumbledSound && !state.overHundredSounds.moveDownSound) {
-                const stumbledAudio = loadAudioFile("/media/over_hundred.mp3")
-                const moveDownAudio = loadAudioFile("/media/move_down.ogg")
-                stumbledAudio.volume = 1
-                moveDownAudio.volume = 1
-                state.overHundredSounds.stumbledSound = stumbledAudio
-                state.overHundredSounds.moveDownSound = moveDownAudio
-            }
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                speechSynth.speak(instructions),
-                await movingPieceSound(),
-                await playAudio(state.overHundredSounds.stumbledSound, 1),
-                playAudio(state.overHundredSounds.moveDownSound, 1)
-            ])
-            showCurrentStatus({ overHundred: true })
-            this.currentValue = 0
-            return
-        } else if (this.currentPosition + this.currentValue === 100) {
-            await embedTemplate(instructions, config)
-            await Promise.all([
-                movingPieceSound(),
-                speechSynth.speak(instructions)
-            ])
-            this.currentValue = 0
-            showCurrentStatus({ gameOver: true })
-            return
-        } else {
-            if (this.currentValue) this.currentPosition += this.currentValue
-        }
+        this.currentPosition += this.currentValue
         await checkCurrentPosition()
+        if (this.overHundred) {
+            await this.#handleOverHundred(instructions)
+            return
+        }
+        if (this.gameOver) {
+            await this.#handleGameOver(instructions)
+            return
+        }
         if (this.ladder) {
-            await this.#handleLadder(instructions, config)
+            await this.#handleLadder(instructions)
             return
         }
         if (this.snake) {
-            await this.#handleSnake(instructions, config)
+            await this.#handleSnake(instructions)
             return
         }
-        await embedTemplate(instructions, config)
+        await embedTemplate(instructions)
         await Promise.all([
             speechSynth.speak(instructions),
             movingPieceSound()
@@ -149,19 +164,19 @@ class Player {
         this.finalStatus()
     }
 
-    async finalStatus(status) {
-        status = status || false
+    async finalStatus() {
+        if (state.loading) state.loading = false
         let instructions = ""
         const config = {
-            mode: "gameStarted",
             inputId: "continue",
             inputLabel: "Continue"
         }
-        if (status.overHundred) {
+        if (this.overHundred) {
             instructions = `${this.name}, You are still at the position ${this.currentPosition}. 
             To continue, press the space bar or enter key. 
             To hear these instructions again, press CTRL + J.`
-        } else if (status.gameOver) {
+            this.overHundred = false
+        } else if (this.gameOver) {
             config.inputId = "finish-game"
             config.inputLabel = "Finish Game"
             instructions = `Game Status. 

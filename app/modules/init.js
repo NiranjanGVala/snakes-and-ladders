@@ -40,7 +40,6 @@ class Init {
         You can also use up or down arrow keys to adjust the value. 
         To hear these instructions again, Press CTRL + J.`
         const config = {
-            mode: "init",
             formId: "number-of-players",
             inputId: "numberOfPlayers",
             inputType: "number",
@@ -62,7 +61,6 @@ class Init {
         const instructions = `Enter name of the player number ${state.index + 1}. 
         To hear these instructions again, press CTRL +J.`
         const config = {
-            mode: "init",
             formId: "player-name",
             inputId: "playerNameInput",
             inputLabel: `Name of the Player Number ${state.index + 1}`,
