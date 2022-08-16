@@ -7,7 +7,8 @@ const config = {
     entry: "./app/app.js",
     output: {
         filename: "script.js",
-        path: path.resolve(__dirname, "dist"),
+        path: path.resolve(__dirname, "docs"),
+        assetModuleFilename: "media/[name][ext]"
     },
     plugins: [new HtmlWebpackPlugin({
         template: "./app/index.html",
@@ -18,6 +19,10 @@ const config = {
             {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"]
+            },
+            {
+                test: /\.(mp3|ogg|wav)$/i,
+                type: "asset/resource"
             }
         ]
     },
