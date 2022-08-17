@@ -21,7 +21,6 @@ import "./css/style.css"
 
 // Module import
 import init from "./modules/init"
-
 window.onload = () => {
     init.firstScreenWidgit()
 }

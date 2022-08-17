@@ -30,8 +30,12 @@ const showCurrentStatus = async function () {
     if (state.currentPlayer.overHundred) {
         const instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
         await embedTemplate(instructions)
-        await speechSynth.speak(instructions)
-        state.currentPlayer.finalStatus()
+        try {
+            await speechSynth.speak(instructions)
+            state.currentPlayer.finalStatus()
+        } catch {
+            setTimeout(() => state.currentPlayer.finalStatus(), 3000)
+        }
         return
     }
     if (state.currentPlayer.gameOver) {
@@ -39,15 +43,15 @@ const showCurrentStatus = async function () {
             Very very congratulations to you! You won the Game! 
             It's party time.`
         if (!state.winSounds.winSound && !state.winSounds.cheersSound) {
-            const winSound = loadAudioFile("/media/win.mp3")
-            const cheersSound = loadAudioFile("/media/cheers.mp3")
+            const winSound = loadAudioFile("media/win.mp3")
+            const cheersSound = loadAudioFile("media/cheers.mp3")
             winSound.volume = 0.25
             cheersSound.volume = 0.25
             state.winSounds.winSound = winSound
             state.winSounds.cheersSound = cheersSound
         }
         await embedTemplate(instructions)
-        await Promise.all([
+        await Promise.allSettled([
             speechSynth.speak(instructions),
             playAudio(state.winSounds.winSound, 1),
             playAudio(state.winSounds.cheersSound, 1)
@@ -58,12 +62,12 @@ const showCurrentStatus = async function () {
     if (state.currentPlayer.ladder.position) {
         const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
         if (!state.ladderSounds.ladderSound) {
-            const audio = loadAudioFile("/media/ladder.mp3")
+            const audio = loadAudioFile("media/ladder.mp3")
             audio.volume = 0.15
             state.ladderSounds.ladderSound = audio
         }
         await embedTemplate(instructions)
-        await Promise.all([
+        await Promise.allSettled([
             speechSynth.speak(instructions),
             playAudio(state.ladderSounds.ladderSound, 1)
         ])
@@ -74,12 +78,12 @@ const showCurrentStatus = async function () {
     if (state.currentPlayer.snake.position) {
         const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
         if (!state.snakeSounds.snakeSound) {
-            const audio = loadAudioFile("/media/snake.mp3")
+            const audio = loadAudioFile("media/snake.mp3")
             audio.volume = 1
             state.snakeSounds.snakeSound = audio
         }
         await embedTemplate(instructions)
-        await Promise.all([
+        await Promise.allSettled([
             speechSynth.speak(instructions),
             playAudio(state.snakeSounds.snakeSound, 3)
         ])
@@ -89,8 +93,12 @@ const showCurrentStatus = async function () {
     }
     const instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
     await embedTemplate(instructions)
-    await speechSynth.speak(instructions)
-    state.currentPlayer.movePiece()
+    try {
+        await speechSynth.speak(instructions)
+        state.currentPlayer.movePiece()
+    } catch {
+        setTimeout(() => state.currentPlayer.movePiece(), 3000)
+    }
 }
 
 const checkCurrentPosition = function () {

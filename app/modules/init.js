@@ -46,7 +46,7 @@ class Init {
             inputLabel: "Number of Players"
         }
         if (!state.currentSound) {
-            state.currentSound = loadAudioFile("/media/select_players.mp3")
+            state.currentSound = loadAudioFile("media/select_players.mp3")
             state.currentSound.play()
             state.currentSound.loop = true
         } else {

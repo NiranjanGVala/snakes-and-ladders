@@ -47,7 +47,7 @@ class SpeechSynth {
                     }
                 }
             } else {
-                resolve()
+                reject()
             }
         })
     }

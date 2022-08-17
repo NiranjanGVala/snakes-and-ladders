@@ -21,7 +21,7 @@ class Player {
         return new Promise(async (resolve, reject) => {
             if (this.ladder.position) {
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     movingPieceSound(),
                     speechSynth.speak(instructions)
                 ])
@@ -31,12 +31,12 @@ class Player {
                 resolve()
             } else {
                 if (!state.ladderSounds.movingPieceSound) {
-                    const audio = loadAudioFile("/media/piece_move_up.mp3")
+                    const audio = loadAudioFile("media/piece_move_up.mp3")
                     audio.volume = 1
                     state.ladderSounds.movingPieceSound = audio
                 }
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     speechSynth.speak(instructions),
                     playAudio(state.ladderSounds.movingPieceSound, 1)
                 ])
@@ -51,7 +51,7 @@ class Player {
         return new Promise(async (resolve, reject) => {
             if (this.snake.position) {
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     speechSynth.speak(instructions),
                     movingPieceSound()
                 ])
@@ -61,12 +61,12 @@ class Player {
                 resolve()
             } else {
                 if (!state.snakeSounds.movingPieceSound) {
-                    const audio = loadAudioFile("/media/piece_move_down.mp3")
+                    const audio = loadAudioFile("media/piece_move_down.mp3")
                     audio.volume = 1
                     state.snakeSounds.movingPieceSound = audio
                 }
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     speechSynth.speak(instructions),
                     playAudio(state.snakeSounds.movingPieceSound, 1)
                 ])
@@ -81,15 +81,15 @@ class Player {
         return new Promise(async (resolve, reject) => {
             if (this.overHundred) {
                 if (!state.overHundredSounds.stumbledSound && !state.overHundredSounds.moveDownSound) {
-                    const stumbledAudio = loadAudioFile("/media/over_hundred.mp3")
-                    const moveDownAudio = loadAudioFile("/media/move_down.ogg")
+                    const stumbledAudio = loadAudioFile("media/over_hundred.mp3")
+                    const moveDownAudio = loadAudioFile("media/move_down.ogg")
                     stumbledAudio.volume = 1
                     moveDownAudio.volume = 1
                     state.overHundredSounds.stumbledSound = stumbledAudio
                     state.overHundredSounds.moveDownSound = moveDownAudio
                 }
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     speechSynth.speak(instructions),
                     await movingPieceSound(),
                     await playAudio(state.overHundredSounds.stumbledSound, 1),
@@ -106,7 +106,7 @@ class Player {
         return new Promise(async (resolve, reject) => {
             if (this.gameOver) {
                 await embedTemplate(instructions)
-                await Promise.all([
+                await Promise.allSettled([
                     movingPieceSound(),
                     speechSynth.speak(instructions)
                 ])
@@ -157,7 +157,7 @@ class Player {
             return
         }
         await embedTemplate(instructions)
-        await Promise.all([
+        await Promise.allSettled([
             speechSynth.speak(instructions),
             movingPieceSound()
         ])
