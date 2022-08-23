@@ -30,11 +30,6 @@ class Player {
                 this.currentPosition = this.ladder.position
                 resolve()
             } else {
-                if (!state.ladderSounds.movingPieceSound) {
-                    const audio = loadAudioFile("media/piece_move_up.mp3")
-                    audio.volume = 1
-                    state.ladderSounds.movingPieceSound = audio
-                }
                 await embedTemplate(instructions)
                 await Promise.allSettled([
                     speechSynth.speak(instructions),
@@ -60,11 +55,6 @@ class Player {
                 this.currentPosition = this.snake.position
                 resolve()
             } else {
-                if (!state.snakeSounds.movingPieceSound) {
-                    const audio = loadAudioFile("media/piece_move_down.mp3")
-                    audio.volume = 1
-                    state.snakeSounds.movingPieceSound = audio
-                }
                 await embedTemplate(instructions)
                 await Promise.allSettled([
                     speechSynth.speak(instructions),
@@ -80,20 +70,11 @@ class Player {
     #handleOverHundred(instructions) {
         return new Promise(async (resolve, reject) => {
             if (this.overHundred) {
-                if (!state.overHundredSounds.stumbledSound && !state.overHundredSounds.moveDownSound) {
-                    const stumbledAudio = loadAudioFile("media/over_hundred.mp3")
-                    const moveDownAudio = loadAudioFile("media/move_down.ogg")
-                    stumbledAudio.volume = 1
-                    moveDownAudio.volume = 1
-                    state.overHundredSounds.stumbledSound = stumbledAudio
-                    state.overHundredSounds.moveDownSound = moveDownAudio
-                }
                 await embedTemplate(instructions)
                 await Promise.allSettled([
                     speechSynth.speak(instructions),
                     await movingPieceSound(),
-                    await playAudio(state.overHundredSounds.stumbledSound, 1),
-                    playAudio(state.overHundredSounds.moveDownSound, 1)
+                    playAudio(state.overHundredSound, 1)
                 ])
                 this.currentValue = 0
                 showCurrentStatus()

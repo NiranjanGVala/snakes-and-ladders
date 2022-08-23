@@ -7,29 +7,26 @@ function savePlayersIntoState(config, value) {
     if (config.inputId === "numberOfPlayers" && !state.players.length) {
         let i = 0
         for (i; i < value; i++) {
-            let ownSound = loadAudioFile(`media/player_${i + 1}.mp3`)
-            state.players.push(new Player(ownSound))
+            state.players.push(new Player(state.playersSound[i]))
         }
     } else {
         state.players[state.index].name = value ? value : `Player ${state.index + 1}`
     }
 }
 
-const introMusic = function () {
+const loadAudioFile = function (config) {
     return new Promise((resolve, reject) => {
-        const intro = new Audio("media/intro.mp3")
-        intro.preload = "metadata"
-        intro.addEventListener("loadedmetadata", () => {
-            intro.volume = 0.05
-            resolve(intro)
+        const audio = new Audio(config.file)
+        audio.addEventListener("canplaythrough", () => {
+            if (config.volume) {
+                audio.volume = config.volume
+            } else {
+                audio.volume = 0.025
+            }
+            if (config.loop) audio.loop = config.loop
+            resolve(audio)
         })
     })
-}
-
-const loadAudioFile = function (file) {
-    const audio = new Audio(file)
-    audio.volume = 0.05
-    return audio
 }
 
 const playAudio = function (audio, count) {
@@ -48,16 +45,8 @@ const playAudio = function (audio, count) {
 
 const movingPieceSound = async function () {
     return new Promise(async (resolve, reject) => {
-        if (!state.movingPieceSound) {
-            const audio = loadAudioFile("media/step.mp3")
-            audio.volume = 1
-            state.movingPieceSound = audio
-            await playAudio(state.movingPieceSound, state.currentPlayer.currentValue)
-            resolve()
-        } else {
-            await playAudio(state.movingPieceSound, state.currentPlayer.currentValue)
-            resolve()
-        }
+        await playAudio(state.movingPieceSound, state.currentPlayer.currentValue)
+        resolve()
     })
 }
 
@@ -65,7 +54,8 @@ const embedTemplate = function (instructions, config) {
     config = config || false
     return new Promise(async (resolve, reject) => {
         let userInput = ""
-        if (state.mode === "init") {
+        if (state.mode === "init" && !state.loading) {
+            // 2.2. Improve the responsibility of this function.
             const generatedTemplate = `<form id="${config.formId}">
             <label for="${config.inputId}">${config.inputLabel}</label>
             <input id="${config.inputId}" type="${config.inputType}" aria-describedby="${config.inputId}-instructions"
@@ -84,6 +74,12 @@ const embedTemplate = function (instructions, config) {
             userInput.addEventListener("input", (e) => {
                 speechSynth.speak(e.target.value)
             })
+        }
+        if (state.mode === "init" && state.loading) {
+            const generatedTemplate = `<div id="instructions" tabindex="0">${instructions}</div>`
+            gameContainer.innerHTML = generatedTemplate
+            userInput = document.getElementById("instructions")
+            resolve()
         }
         if (state.mode === "started" && !state.loading) {
             const generatedTemplate = `<p id="instructions">${instructions}</p>
@@ -122,4 +118,4 @@ const embedTemplate = function (instructions, config) {
     })
 }
 
-export { introMusic, embedTemplate, loadAudioFile, playAudio, movingPieceSound }
+export { embedTemplate, loadAudioFile, playAudio, movingPieceSound }

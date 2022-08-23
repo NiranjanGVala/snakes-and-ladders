@@ -13,24 +13,13 @@ class Dice {
         if (!state.loading) state.loading = true
         const instructions = `Rolling Dice...`
         state.currentPlayer.currentValue = Math.floor(Math.random() * 6) + 1
-        // state.currentPlayer.currentValue = 3
-        await embedTemplate(instructions)
-        if (!state.rollingDiceSound) {
-            const audio = loadAudioFile("media/dice_rolling.mp3")
-            audio.volume = 1
-            state.rollingDiceSound = audio
-            await Promise.allSettled([
-                playAudio(state.rollingDiceSound, 1),
-                speechSynth.speak(instructions)
-            ])
-            showCurrentStatus()
-        } else {
-            await Promise.allSettled([
-                playAudio(state.rollingDiceSound, 1),
-                speechSynth.speak(instructions)
-            ])
-            showCurrentStatus()
-        }
+        // state.currentPlayer.currentValue = 2
+        await Promise.allSettled([
+            embedTemplate(instructions),
+            playAudio(state.rollingDiceSound, 1),
+            speechSynth.speak(instructions)
+        ])
+        showCurrentStatus()
     }
 }
 

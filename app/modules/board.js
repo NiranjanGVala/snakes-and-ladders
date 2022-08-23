@@ -42,18 +42,10 @@ const showCurrentStatus = async function () {
         const instructions = `${state.currentPlayer.name}, You landed on destination of your dreem! 
             Very very congratulations to you! You won the Game! 
             It's party time.`
-        if (!state.winSounds.winSound && !state.winSounds.cheersSound) {
-            const winSound = loadAudioFile("media/win.mp3")
-            const cheersSound = loadAudioFile("media/cheers.mp3")
-            winSound.volume = 0.25
-            cheersSound.volume = 0.25
-            state.winSounds.winSound = winSound
-            state.winSounds.cheersSound = cheersSound
-        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),
-            playAudio(state.winSounds.winSound, 1),
+            await playAudio(state.winSounds.winSound, 1),
             playAudio(state.winSounds.cheersSound, 1)
         ])
         state.currentPlayer.finalStatus()
@@ -61,11 +53,6 @@ const showCurrentStatus = async function () {
     }
     if (state.currentPlayer.ladder.position) {
         const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
-        if (!state.ladderSounds.ladderSound) {
-            const audio = loadAudioFile("media/ladder.mp3")
-            audio.volume = 0.15
-            state.ladderSounds.ladderSound = audio
-        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),
@@ -77,11 +64,6 @@ const showCurrentStatus = async function () {
     }
     if (state.currentPlayer.snake.position) {
         const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
-        if (!state.snakeSounds.snakeSound) {
-            const audio = loadAudioFile("media/snake.mp3")
-            audio.volume = 1
-            state.snakeSounds.snakeSound = audio
-        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),

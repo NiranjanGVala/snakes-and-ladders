@@ -1,4 +1,5 @@
 const state = {
+    introSound: false,
     speech: true,
     players: [],
     currentPlayer: {},
@@ -8,9 +9,10 @@ const state = {
     currentSound: false,
     movingPieceSound: false,
     rollingDiceSound: false,
+    playersSound: [],
     ladderSounds: {},
     snakeSounds: {},
-    overHundredSounds: {},
+    overHundredSound: false,
     winSounds: {}
 }
 

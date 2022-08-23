@@ -1,6 +1,23 @@
-import { gameContainer } from "./globals"
+import {
+    gameContainer,
+    introSoundConfig,
+    currentSoundConfig,
+    playerOneSoundConfig,
+    playerTwoSoundConfig,
+    playerThreeSoundConfig,
+    playerFourSoundConfig,
+    rollingDiceSoundConfig,
+    movingPieceSoundConfig,
+    ladderSoundConfig,
+    snakeSoundConfig,
+    ladderClimbSoundConfig,
+    snakeDescendDownSoundConfig,
+    overHundredSoundConfig,
+    winSoundConfig,
+    cheersSoundConfig
+} from "./globals"
 import state from "./state"
-import { embedTemplate, introMusic, loadAudioFile } from "./functions"
+import { embedTemplate, loadAudioFile } from "./functions"
 import speechSynth from "./speech-synth"
 
 class Init {
@@ -18,20 +35,61 @@ class Init {
         document.getElementById("start-game")
             .addEventListener("submit", (e) => {
                 e.preventDefault()
-                this.welcomeAnimation()
+                this.init()
             })
     }
 
+    init() {
+        if (!state.loading) state.loading = true
+        const instructions = "Please Wait..."
+        return new Promise(async (resolve, reject) => {
+            embedTemplate(instructions)
+            const introSound = await loadAudioFile(introSoundConfig)
+            state.introSound = introSound
+            const currentSound = await loadAudioFile(currentSoundConfig)
+            state.currentSound = currentSound
+            const playerOneSound = await loadAudioFile(playerOneSoundConfig)
+            state.playersSound.push(playerOneSound)
+            const playerTwoSound = await loadAudioFile(playerTwoSoundConfig)
+            state.playersSound.push(playerTwoSound)
+            const playerThreeSound = await loadAudioFile(playerThreeSoundConfig)
+            state.playersSound.push(playerThreeSound)
+            const playerFourSound = await loadAudioFile(playerFourSoundConfig)
+            state.playersSound.push(playerFourSound)
+            const rollingDiceSound = await loadAudioFile(rollingDiceSoundConfig)
+            state.rollingDiceSound = rollingDiceSound
+            const movingPieceSound = await loadAudioFile(movingPieceSoundConfig)
+            state.movingPieceSound = movingPieceSound
+            const ladderSound = await loadAudioFile(ladderSoundConfig)
+            state.ladderSounds.ladderSound = ladderSound
+            const snakeSound = await loadAudioFile(snakeSoundConfig)
+            state.snakeSounds.snakeSound = snakeSound
+            const ladderClimbSound = await loadAudioFile(ladderClimbSoundConfig)
+            state.ladderSounds.movingPieceSound = ladderClimbSound
+            const snakeDescendDownSound = await loadAudioFile(snakeDescendDownSoundConfig)
+            state.snakeSounds.movingPieceSound = snakeDescendDownSound
+            const overHundredSound = await loadAudioFile(overHundredSoundConfig)
+            state.overHundredSound = overHundredSound
+            const winSound = await loadAudioFile(winSoundConfig)
+            state.winSounds.winSound = winSound
+            const cheersSound = await loadAudioFile(cheersSoundConfig)
+            state.winSounds.cheersSound = cheersSound
+            await speechSynth.speak(instructions)
+            this.welcomeAnimation()
+            resolve()
+        })
+    }
+
     async welcomeAnimation() {
-        const intro = await introMusic()
+        if (state.loading) state.loading = false
         const welcomeText = document.createElement("p")
         welcomeText.textContent = "Welcome"
         welcomeText.classList.add("welcome")
-        gameContainer.replaceChild(welcomeText, document.getElementById("start-game"))
-        intro.play()
-        welcomeText.style.animation = `welcome ${intro.duration}s`
-        setTimeout(async () => await speechSynth.speak(welcomeText.textContent), (intro.duration * 1000) / 4)
-        intro.onended = () => this.fetchNumberOfPlayers()
+        gameContainer.replaceChild(welcomeText, document.getElementById("instructions"))
+        state.introSound.play()
+        welcomeText.style.animation = `welcome ${state.introSound.duration}s`
+        setTimeout(async () => await speechSynth.speak(welcomeText.textContent), (state.introSound.duration * 1000) / 4)
+        state.introSound.onended = () => this.fetchNumberOfPlayers()
     }
 
     async fetchNumberOfPlayers() {
@@ -45,13 +103,7 @@ class Init {
             inputType: "number",
             inputLabel: "Number of Players"
         }
-        if (!state.currentSound) {
-            state.currentSound = loadAudioFile("media/select_players.mp3")
-            state.currentSound.play()
-            state.currentSound.loop = true
-        } else {
-            state.currentSound.play()
-        }
+        state.currentSound.play()
         speechSynth.speak(instructions)
         await embedTemplate(instructions, config)
         this.fetchPlayersName()
@@ -67,6 +119,7 @@ class Init {
             inputType: "text"
         }
         speechSynth.speak(instructions)
+        // 2.1. Improve the responsibility of this function.
         if (state.index === state.players.length - 1) {
             await embedTemplate(instructions, config)
             state.index = 0
