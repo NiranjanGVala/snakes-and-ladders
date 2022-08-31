@@ -1,6 +1,6 @@
 import { checkCurrentPosition, showCurrentStatus } from "./board"
 import dice from "./dice"
-import { embedTemplate, loadAudioFile, movingPieceSound, playAudio } from "./functions"
+import { generateInstructions, embedTemplate, loadAudioFile, movingPieceSound, playAudio } from "./functions"
 import speechSynth from "./speech-synth"
 import state from "./state"
 
@@ -14,6 +14,9 @@ class Player {
         this.gameOver = false
         this.ladder = false
         this.snake = false
+        this.ladderCount = 0
+        this.snakeCount = 0
+        this.turnCount = 0
     }
 
     // Private methods
@@ -28,6 +31,7 @@ class Player {
                 this.currentValue = 0
                 showCurrentStatus()
                 this.currentPosition = this.ladder.position
+                this.ladderCount++
                 resolve()
             } else {
                 await embedTemplate(instructions)
@@ -53,6 +57,7 @@ class Player {
                 this.currentValue = 0
                 showCurrentStatus()
                 this.currentPosition = this.snake.position
+                this.snakeCount++
                 resolve()
             } else {
                 await embedTemplate(instructions)
@@ -103,10 +108,10 @@ class Player {
         if (state.mode === "init") state.mode = "started"
         this.ownSound.play()
         this.ownSound.loop = true
-        const instructions = `Hi ${this.name}, It's your turn. 
+        const instructions = generateInstructions(`Hi ${this.name}, It's your turn. 
         You are currently at the position ${this.currentPosition}. 
         To role the dice, press the space bar or enter key. 
-        To hear these instructions again, press CTRL + J.`
+        To hear these instructions again, press CTRL + J.`, true)
         const config = {
             inputId: "role-dice",
             inputLabel: "Role Dice"
@@ -157,24 +162,27 @@ class Player {
             To continue, press the space bar or enter key. 
             To hear these instructions again, press CTRL + J.`
             this.overHundred = false
+            this.turnCount++
         } else if (this.gameOver) {
+            this.turnCount++
             config.inputId = "finish-game"
             config.inputLabel = "Finish Game"
-            instructions = `Game Status. 
-            To finish the game, press the space bar or enter key. 
-            To hear these instructions again, press CTRL + J.`
+            instructions = generateInstructions(`To finish the game, press the space bar or enter key. 
+            To hear these instructions again, press CTRL + J.`)
             speechSynth.speak(instructions)
             await embedTemplate(instructions, config)
             this.finishGame()
             return
         } else {
-            instructions = `${this.name}, You've reached at the position ${this.currentPosition}. 
+            instructions = generateInstructions(`${this.name}, You've reached at the position ${this.currentPosition}. 
             To continue, press the space bar or enter key. 
-            To hear these instructions again, press CTRL + J.`
+            To hear these instructions again, press CTRL + J.`)
+            this.turnCount++
         }
         if (state.index === state.players.length - 1) {
             speechSynth.speak(instructions)
             await embedTemplate(instructions, config)
+            state.rounds++
             state.index = 0
             this.ownSound.pause()
             this.ownSound.currentTime = 0

@@ -50,6 +50,37 @@ const movingPieceSound = async function () {
     })
 }
 
+const generateInstructions = function (instructions, processPreInstructions) {
+    processPreInstructions = processPreInstructions || false
+    let finalInstructions = ""
+    if (state.currentPlayer.gameOver) {
+        finalInstructions = `<div>
+            <h2>Game Stats</h2>
+            <p>Total rounds: ${state.rounds}</p>
+            <table>
+                <thead>
+                    <tr><th>Player</th><th>Turns</th><th>Ladders</th><th>Snakes</th></tr>
+                </thead>
+                <tbody>
+                ${state.players.map(player => {
+            return `<tr><td>${player.name}</td><td>${player.turnCount}</td><td>${player.ladderCount}</td><td>${player.snakeCount}</td></tr>`
+        }).join("")}
+                </tbody>
+            </table>
+            <p>${instructions}</p>
+        </div>`
+        return finalInstructions
+    }
+    if (processPreInstructions) {
+        const preInstructions = `Round ${state.rounds}:`
+        finalInstructions = `<h2>${preInstructions}</h2>
+        <p>${instructions}</p>`
+    } else {
+        finalInstructions = `<p>${instructions}</p>`
+    }
+    return finalInstructions
+}
+
 const embedTemplate = function (instructions, config) {
     config = config || false
     return new Promise(async (resolve, reject) => {
@@ -82,7 +113,7 @@ const embedTemplate = function (instructions, config) {
             resolve()
         }
         if (state.mode === "started" && !state.loading) {
-            const generatedTemplate = `<p id="instructions">${instructions}</p>
+            const generatedTemplate = `<div id="instructions">${instructions}</div>
             <button id="${config.inputId}" aria-describedby="instructions">${config.inputLabel}</button>`
             gameContainer.innerHTML = generatedTemplate
             userInput = document.getElementById(config.inputId)
@@ -118,4 +149,4 @@ const embedTemplate = function (instructions, config) {
     })
 }
 
-export { embedTemplate, loadAudioFile, playAudio, movingPieceSound }
+export { generateInstructions, embedTemplate, loadAudioFile, playAudio, movingPieceSound }

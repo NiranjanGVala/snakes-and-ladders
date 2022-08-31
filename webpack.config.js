@@ -14,12 +14,7 @@ const config = {
     plugins: [new HtmlWebpackPlugin({
         template: "./app/index.html",
         inject: "body"
-    }),
-    new WorkboxPlugin.GenerateSW({
-        clientsClaim: true,
-        maximumFileSizeToCacheInBytes: 10000000,
-        skipWaiting: true
-    }),],
+    })],
     module: {
         rules: [
             {
@@ -41,6 +36,14 @@ const config = {
     },
     devtool: false,
     mode: "development"
+}
+
+if (currentTask === "start") {
+    config.plugins.push(new WorkboxPlugin.GenerateSW({
+        clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 10000000,
+        skipWaiting: true
+    }))
 }
 
 if (currentTask === "build") {

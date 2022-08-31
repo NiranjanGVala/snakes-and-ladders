@@ -44,6 +44,7 @@ class Init {
         const instructions = "Please Wait..."
         return new Promise(async (resolve, reject) => {
             embedTemplate(instructions)
+            speechSynth.speak(instructions)
             const introSound = await loadAudioFile(introSoundConfig)
             state.introSound = introSound
             const currentSound = await loadAudioFile(currentSoundConfig)
@@ -74,7 +75,6 @@ class Init {
             state.winSounds.winSound = winSound
             const cheersSound = await loadAudioFile(cheersSoundConfig)
             state.winSounds.cheersSound = cheersSound
-            await speechSynth.speak(instructions)
             this.welcomeAnimation()
             resolve()
         })

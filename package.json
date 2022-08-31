@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "webpack serve",
     "build": "webpack",
-    "start": "http-server docs",
+    "start": "http-server docs -p 8888",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
