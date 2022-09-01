@@ -85,6 +85,9 @@ const showCurrentStatus = async function () {
 
 const checkCurrentPosition = function () {
     return new Promise((resolve, reject) => {
+        if (state.currentPlayer.currentValue === 6) {
+            state.currentPlayer.turn = true
+        }
         if (state.currentPlayer.currentPosition > 100) {
             const oldPosition = state.currentPlayer.currentPosition - state.currentPlayer.currentValue
             state.currentPlayer.currentValue = 100 - oldPosition

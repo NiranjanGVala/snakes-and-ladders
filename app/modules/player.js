@@ -10,6 +10,7 @@ class Player {
         this.name = ""
         this.currentPosition = 1
         this.currentValue = 0
+        this.turn = false
         this.overHundred = false
         this.gameOver = false
         this.ladder = false
@@ -179,23 +180,30 @@ class Player {
             To hear these instructions again, press CTRL + J.`)
             this.turnCount++
         }
-        if (state.index === state.players.length - 1) {
+        if (this.turn) {
             speechSynth.speak(instructions)
             await embedTemplate(instructions, config)
-            state.rounds++
-            state.index = 0
+            this.renderPlayGround()
+            this.turn = false
+        } else {
+            if (state.index === state.players.length - 1) {
+                speechSynth.speak(instructions)
+                await embedTemplate(instructions, config)
+                state.rounds++
+                state.index = 0
+                this.ownSound.pause()
+                this.ownSound.currentTime = 0
+                state.currentPlayer = state.players[0]
+                state.currentPlayer.renderPlayGround()
+                return
+            }
+            speechSynth.speak(instructions)
+            await embedTemplate(instructions, config)
             this.ownSound.pause()
             this.ownSound.currentTime = 0
-            state.currentPlayer = state.players[0]
+            state.currentPlayer = state.players[++state.index]
             state.currentPlayer.renderPlayGround()
-            return
         }
-        speechSynth.speak(instructions)
-        await embedTemplate(instructions, config)
-        this.ownSound.pause()
-        this.ownSound.currentTime = 0
-        state.currentPlayer = state.players[++state.index]
-        state.currentPlayer.renderPlayGround()
     }
 
     finishGame() {
