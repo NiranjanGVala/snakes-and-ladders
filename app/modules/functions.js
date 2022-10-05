@@ -3,7 +3,8 @@ import state from "./state"
 import speechSynth from "./speech-synth"
 import Player from "./player"
 
-function savePlayersIntoState(config, value) {
+function savePlayersIntoState(value, config) {
+    config = config || false
     if (config.inputId === "numberOfPlayers" && !state.players.length) {
         let i = 0
         for (i; i < value; i++) {
@@ -11,6 +12,26 @@ function savePlayersIntoState(config, value) {
         }
     } else {
         state.players[state.index].name = value ? value : `Player ${state.index + 1}`
+        if (config.isComputer) {
+            state.players[state.index].isComputer = true
+        } else {
+            state.players[state.index].isComputer = false
+        }
+    }
+}
+
+const toggleSpeech = async (e, instructions) => {
+    if (e.ctrlKey && e.key === "s") {
+        let force = {}
+        e.preventDefault()
+        if (state.speech) {
+            if (force.cancel) force.cancel()
+            speechSynth.speak("Speech Off")
+            state.speech = false
+        } else {
+            state.speech = true
+            await speechSynth.speak(`Speech On. ${instructions}`, force)
+        }
     }
 }
 
@@ -90,7 +111,7 @@ const embedTemplate = function (instructions, config) {
             const generatedTemplate = `<form id="${config.formId}">
             <label for="${config.inputId}">${config.inputLabel}</label>
             <input id="${config.inputId}" type="${config.inputType}" aria-describedby="${config.inputId}-instructions"
-                ${config.inputType === "number" ? `min="1" max="4"` : ""}>
+                ${config.inputType === "number" ? `min="2" max="4"` : ""}>
             <p id="${config.inputId}-instructions">${instructions}</p>
             <button type="submit" hidden>Next</button>
             </form>`
@@ -99,7 +120,7 @@ const embedTemplate = function (instructions, config) {
             document.getElementById(config.formId)
                 .addEventListener("submit", (e) => {
                     e.preventDefault()
-                    savePlayersIntoState(config, userInput.value)
+                    savePlayersIntoState(userInput.value, config)
                     resolve()
                 })
             userInput.addEventListener("input", (e) => {
@@ -132,21 +153,10 @@ const embedTemplate = function (instructions, config) {
                     e.preventDefault()
                     speechSynth.speak(instructions)
                 }
-                if (e.ctrlKey && e.key === "s") {
-                    let force = {}
-                    e.preventDefault()
-                    if (state.speech) {
-                        if (force.cancel) force.cancel()
-                        speechSynth.speak("Speech Off")
-                        state.speech = false
-                    } else {
-                        state.speech = true
-                        await speechSynth.speak(`Speech On. ${instructions}`, force)
-                    }
-                }
+                toggleSpeech(e, instructions)
             })
         }
     })
 }
 
-export { generateInstructions, embedTemplate, loadAudioFile, playAudio, movingPieceSound }
+export { generateInstructions, embedTemplate, savePlayersIntoState, toggleSpeech, loadAudioFile, playAudio, movingPieceSound }

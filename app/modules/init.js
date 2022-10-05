@@ -17,7 +17,7 @@ import {
     cheersSoundConfig
 } from "./globals"
 import state from "./state"
-import { embedTemplate, loadAudioFile } from "./functions"
+import { embedTemplate, savePlayersIntoState, toggleSpeech, loadAudioFile } from "./functions"
 import speechSynth from "./speech-synth"
 
 class Init {
@@ -94,7 +94,7 @@ class Init {
 
     async fetchNumberOfPlayers() {
         const instructions = `Enter number of players. 
-        Maximum up-to 4 players are allowed. 
+        Minimum 2 players and maximum up-to 4 players are allowed including computer as a player. 
         You can also use up or down arrow keys to adjust the value. 
         To hear these instructions again, Press CTRL + J.`
         const config = {
@@ -106,7 +106,55 @@ class Init {
         state.currentSound.play()
         speechSynth.speak(instructions)
         await embedTemplate(instructions, config)
-        this.fetchPlayersName()
+        this.setComputerAsAPlayer()
+    }
+
+    async setComputerAsAPlayer() {
+        const instructions = `Should I Felix (Computer) participate as a player in this game? 
+        If you choose yes then computer will play as a player number 1 in this game.`
+        const generatedTemplate = `<form id="set-computer-as-a-player">
+        <p id="set-computer-as-a-player-description">${instructions}</p>
+        <input id="no" type="submit" value="No" aria-describedby="set-computer-as-a-player-description">
+        <input id="yes" type="submit" value="Yes" aria-describedby="set-computer-as-a-player-description">
+        </form>`
+        gameContainer.innerHTML = generatedTemplate
+        let lastFocussedElement = ""
+        let noButton = document.getElementById("no")
+        let yesButton = document.getElementById("yes")
+        noButton.focus()
+        lastFocussedElement = noButton
+        noButton.onfocus = () => {
+            speechSynth.speak(noButton.value)
+            lastFocussedElement = noButton
+        }
+        yesButton.onfocus = () => {
+            speechSynth.speak(yesButton.value)
+            lastFocussedElement = yesButton
+        }
+        speechSynth.speak(`${instructions}. ${lastFocussedElement.value}`)
+        noButton.onkeydown = e => {
+            if (e.ctrlKey && e.key === "j") {
+                e.preventDefault()
+                speechSynth.speak(`${instructions}. ${lastFocussedElement.value}`)
+            }
+            toggleSpeech(e, instructions)
+        }
+        yesButton.onkeydown = e => {
+            if (e.ctrlKey && e.key === "j") {
+                e.preventDefault()
+                speechSynth.speak(`${instructions}. ${lastFocussedElement.value}`)
+            }
+            toggleSpeech(e, instructions)
+        }
+        const setComputerAsAPlayerForm = document.getElementById("set-computer-as-a-player")
+        setComputerAsAPlayerForm.addEventListener("submit", (e) => {
+            e.preventDefault()
+            if (e.submitter.value === "Yes") {
+                savePlayersIntoState("Felix", { isComputer: true })
+                state.index++
+            }
+            this.fetchPlayersName()
+        })
     }
 
     async fetchPlayersName() {

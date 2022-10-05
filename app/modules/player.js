@@ -109,13 +109,26 @@ class Player {
         if (state.mode === "init") state.mode = "started"
         this.ownSound.play()
         this.ownSound.loop = true
-        const instructions = generateInstructions(`Hi ${this.name}, It's your turn. 
-        You are currently at the position ${this.currentPosition}. 
-        To role the dice, press the space bar or enter key. 
-        To hear these instructions again, press CTRL + J.`, true)
-        const config = {
-            inputId: "role-dice",
-            inputLabel: "Role Dice"
+        let instructions = ""
+        let config = ""
+        if (this.isComputer) {
+            instructions = generateInstructions(`Hi my ${state.players.length > 2 ? 'rivals' : 'rival'}, I'm Felix. It's my turn. 
+            I am currently at the position ${this.currentPosition}. 
+            I will role my dice after you press the enter or spacebar key. 
+            To hear these instructions again, press CTRL + J.`, true)
+            config = {
+                inputId: "continue",
+                inputLabel: "Continue"
+            }
+        } else {
+            instructions = generateInstructions(`Hi ${this.name}, It's your turn. 
+            You are currently at the position ${this.currentPosition}. 
+            To role the dice, press the space bar or enter key. 
+            To hear these instructions again, press CTRL + J.`, true)
+            config = {
+                inputId: "role-dice",
+                inputLabel: "Role Dice"
+            }
         }
         speechSynth.speak(instructions)
         await embedTemplate(instructions, config)
@@ -124,7 +137,12 @@ class Player {
 
     async movePiece() {
         if (!state.loading) state.loading = true
-        const instructions = `${this.name}, moving your piece...`
+        let instructions = ""
+        if (this.isComputer) {
+            instructions = `I'm moving my piece...`
+        } else {
+            instructions = `${this.name}, moving your piece...`
+        }
         this.currentPosition += this.currentValue
         await checkCurrentPosition()
         if (this.overHundred) {
@@ -159,9 +177,15 @@ class Player {
             inputLabel: "Continue"
         }
         if (this.overHundred) {
-            instructions = `${this.name}, You are still at the position ${this.currentPosition}. 
+            if (this.isComputer) {
+                instructions = `I'm still at the position ${this.currentPosition}. 
             To continue, press the space bar or enter key. 
             To hear these instructions again, press CTRL + J.`
+            } else {
+                instructions = `${this.name}, You are still at the position ${this.currentPosition}. 
+            To continue, press the space bar or enter key. 
+            To hear these instructions again, press CTRL + J.`
+            }
             this.overHundred = false
             this.turnCount++
         } else if (this.gameOver) {
@@ -175,9 +199,15 @@ class Player {
             this.finishGame()
             return
         } else {
-            instructions = generateInstructions(`${this.name}, You've reached at the position ${this.currentPosition}. 
+            if (this.isComputer) {
+                instructions = generateInstructions(`I've reached at the position ${this.currentPosition}. 
             To continue, press the space bar or enter key. 
             To hear these instructions again, press CTRL + J.`)
+            } else {
+                instructions = generateInstructions(`${this.name}, You've reached at the position ${this.currentPosition}. 
+            To continue, press the space bar or enter key. 
+            To hear these instructions again, press CTRL + J.`)
+            }
             this.turnCount++
         }
         if (this.turn) {

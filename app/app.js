@@ -20,18 +20,25 @@ import "./css/style.css"
 
 // Module import
 import init from "./modules/init"
-if ('serviceWorker' in navigator) {
+
+if (location.hostname === "localhost" && location.port === "8080") {
     window.onload = () => {
-        navigator.serviceWorker.register('service-worker.js').then(registration => {
-            console.log('SW registered: ', registration)
-        }).catch(registrationError => {
-            console.log('SW registration failed: ', registrationError)
-        })
         init.firstScreenWidgit()
     }
 } else {
-    window.onload = () => {
-        init.firstScreenWidgit()
+    if ('serviceWorker' in navigator) {
+        window.onload = () => {
+            navigator.serviceWorker.register('service-worker.js').then(registration => {
+                console.log('SW registered: ', registration)
+            }).catch(registrationError => {
+                console.log('SW registration failed: ', registrationError)
+            })
+            init.firstScreenWidgit()
+        }
+    } else {
+        window.onload = () => {
+            init.firstScreenWidgit()
+        }
     }
 }
 

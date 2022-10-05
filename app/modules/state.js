@@ -6,6 +6,7 @@ const state = {
     index: 0,
     mode: "init",
     loading: false,
+    setComputerAsAPlayer: false,
     rounds: 1,
     currentSound: false,
     movingPieceSound: false,

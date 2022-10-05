@@ -28,7 +28,12 @@ const snakes = {
 const showCurrentStatus = async function () {
     if (!state.loading) state.loading = true
     if (state.currentPlayer.overHundred) {
-        const instructions = `${state.currentPlayer.name}, You've to land on exact position of 100. Please try again in a next turn.`
+        let instructions = ""
+        if (state.currentPlayer.isComputer) {
+            instructions = `Oh no! It seems I got over energised this time. I must land on exact position of 100 to win this game. Don't be happy, I'll try in my next turn.`
+        } else {
+            instructions = `Oh no! It seems you got over energised this time. ${state.currentPlayer.name}, You must land on exact position of 100 to win this game. Please try again in a next turn.`
+        }
         await embedTemplate(instructions)
         try {
             await speechSynth.speak(instructions)
@@ -39,9 +44,16 @@ const showCurrentStatus = async function () {
         return
     }
     if (state.currentPlayer.gameOver) {
-        const instructions = `${state.currentPlayer.name}, You landed on destination of your dreem! 
+        let instructions = ""
+        if (state.currentPlayer.isComputer) {
+            instructions = `Yay! Finally I landed on destination of my dreem! 
+            I won this game!
+            It's party time.`
+        } else {
+            instructions = `Yay! ${state.currentPlayer.name}, You landed on destination of your dreem! 
             Very very congratulations to you! You won the Game! 
             It's party time.`
+        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),
@@ -52,7 +64,12 @@ const showCurrentStatus = async function () {
         return
     }
     if (state.currentPlayer.ladder.position) {
-        const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
+        let instructions = ""
+        if (state.currentPlayer.isComputer) {
+            instructions = `I reached at the position ${state.currentPlayer.currentPosition}. Great! I'm going to climb a ladder!`
+        } else {
+            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Great! You are going to climb a ladder!`
+        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),
@@ -63,7 +80,12 @@ const showCurrentStatus = async function () {
         return
     }
     if (state.currentPlayer.snake.position) {
-        const instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+        let instructions = ""
+        if (state.currentPlayer.isComputer) {
+            instructions = `I reached at the position ${state.currentPlayer.currentPosition}. Oh no, I got a snake byte. I have to descend down.`
+        } else {
+            instructions = `${state.currentPlayer.name}, You reached at the position ${state.currentPlayer.currentPosition}. Oh no, You got a snake byte. You have to descend down.`
+        }
         await embedTemplate(instructions)
         await Promise.allSettled([
             speechSynth.speak(instructions),
@@ -73,7 +95,12 @@ const showCurrentStatus = async function () {
         state.currentPlayer.movePiece()
         return
     }
-    const instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
+    let instructions = ""
+    if (state.currentPlayer.isComputer) {
+        instructions = `I got ${state.currentPlayer.currentValue}.`
+    } else {
+        instructions = `${state.currentPlayer.name}, You got ${state.currentPlayer.currentValue}.`
+    }
     await embedTemplate(instructions)
     try {
         await speechSynth.speak(instructions)
